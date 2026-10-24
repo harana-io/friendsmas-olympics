@@ -155,6 +155,22 @@ h2{margin:0;text-align:center;font-family:var(--body);font-weight:600;font-size:
 .pill:hover{background:var(--ever);color:var(--gold-light)}
 .pill svg{width:14px;height:14px}
 
+/* welcome back */
+.wb{margin:0 auto 26px;max-width:540px;padding:18px clamp(12px,3vw,20px) 16px;border:1px solid var(--gold);border-radius:12px;background:linear-gradient(180deg,rgba(15,59,46,.06),rgba(201,162,74,.12));text-align:center}
+.wb[hidden]{display:none}
+.wb-hi{margin:0 0 12px;font-family:var(--script);font-size:clamp(34px,7vw,44px);line-height:1.05;color:var(--ever)}
+.wb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.wb-tile{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;padding:10px 4px;border-radius:9px;background:var(--ivory);border:1px solid var(--rule);text-decoration:none;color:var(--ink);min-width:0}
+a.wb-tile:hover{border-color:var(--gold);background:#fff}
+.wb-k{font-family:var(--caps);font-weight:700;font-size:8.5px;letter-spacing:.18em;color:var(--gold-dark)}
+.wb-v{font-family:var(--body);font-weight:600;font-size:clamp(16px,3vw,20px);line-height:1.15}
+.wb-v.yes{color:var(--ever)}.wb-v.no{color:var(--crimson)}
+.wb-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
+.wb-links .pill{font-size:9.5px;padding:9px 13px;cursor:pointer}
+.declined{display:none;flex-direction:column;align-items:center;gap:10px}
+.rsvp-box.no .declined{display:flex}.rsvp-box.no .ask{display:none}
+.declined .badge{font-family:var(--script);font-size:44px;line-height:1}
+@media (max-width:560px){.wb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* venue */
 .when .forever{font-family:var(--script);font-style:normal;font-size:1.7em;color:var(--crimson);line-height:1;padding:0 .08em}
 .card>.venue{text-align:center;z-index:5}
@@ -353,6 +369,17 @@ body.quake #stage{animation:shake .5s}
       <text x="120" y="167" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="12" letter-spacing="5" fill="#f6e3a1">MMXXVI</text>
     </svg>
 
+    <section class="wb" id="wb" hidden aria-label="Welcome back">
+      <p class="wb-hi">Welcome back, <span id="wbName">friend</span></p>
+      <div class="wb-grid">
+        <a class="wb-tile" href="#rsvp"><span class="wb-k">YOUR RSVP</span><span class="wb-v" id="wbRsvp">Not yet</span></a>
+        <a class="wb-tile" href="#game"><span class="wb-k">YOUR BEST</span><span class="wb-v" id="wbBest">—</span></a>
+        <a class="wb-tile" href="#game"><span class="wb-k">PODIUM RANK</span><span class="wb-v" id="wbRank">—</span></a>
+        <div class="wb-tile"><span class="wb-k">GAMES BEGIN IN</span><span class="wb-v" id="wbDays">—</span></div>
+      </div>
+      <div class="wb-links"><a class="pill" id="wbDir" target="_blank" rel="noopener" href="#">DIRECTIONS</a><a class="pill" href="#game">PLAY &amp; CLIMB THE PODIUM</a><button class="pill" type="button" id="wbEnv">REOPEN THE ENVELOPE</button></div>
+    </section>
+
     <p class="lead">The pleasure of your company is requested at&nbsp;the</p>
     <h1><span class="script foil">Friendsmas</span><span class="caps">Olympics</span></h1>
 
@@ -446,7 +473,7 @@ body.quake #stage{animation:shake .5s}
 
     <div class="rule"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1l2.2 6.8H19l-5.5 4 2.1 6.7L10 14.4l-5.6 4.1 2.1-6.7L1 7.8h6.8z" fill="#c9a24a"/></svg></div>
 
-    <section class="game" aria-label="Warm-up game: The Great Ornament Catch">
+    <section class="game" id="game" aria-label="Warm-up game: The Great Ornament Catch">
       <span class="eyebrow">The Warm-Up Event</span>
       <h2>The Great Ornament Catch</h2>
       <div class="gframe">
@@ -497,6 +524,11 @@ body.quake #stage{animation:shake .5s}
           <p class="status" id="status" aria-live="polite"></p>
           <p class="fine">Note: the Decline button is purely decorative. The judges have spoken.</p>
         </form>
+        <div class="declined" id="declinedBox">
+          <span class="badge" style="color:var(--crimson)">The judges remember.</span>
+          <p class="sub" style="margin:0" id="declinedMsg">Your decline has been entered into the record. Appeals are still being heard.</p>
+          <button class="btn primary small" type="button" id="appeal2">FILE AN APPEAL (SAY YES)</button>
+        </div>
         <div class="onlist" id="onlist">
           <span class="badge foil">You’re on the list</span>
           <p class="sub" style="margin:0" id="onlistMsg"></p>
@@ -725,6 +757,7 @@ function endGame(){ state='over'; setTune('carol'); sfx('end'); const best=Math.
   else if(score>=20){ m=medalSVG('#dfe5ea','#6b7781','2nd'); v='Respectable. The Keeper of the Score nods, slightly.'; }
   else { m=medalSVG('#d99a5b','#7a4a1e','3rd'); v='The judges are… concerned. Training camp starts now.'; }
   lastScore=score; postedThisRound=false; $('#lbpost').disabled=false; $('#lbpost').textContent='POST MY SCORE'; $('#lbok').textContent=''; $('#lbname').value=store.get('lbName')||((store.get('rsvp')||{}).name||'').split(' ')[0]||'';
+  setTimeout(renderWB,0);
   $('#gmedal').innerHTML=m; $('#gscore').textContent=score; $('#gverdict').textContent=v; $('#gend').hidden=false; showBest(); }
 function showBest(){ const b=store.get('best'); $('#gbest').textContent=b?('YOUR BEST: '+b+' · GOLD AT 40'):'GOLD MEDAL AT 40 POINTS'; }
 showBest();
@@ -784,16 +817,16 @@ noBtn.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') dodge(); 
 noBtn.addEventListener('touchstart',e=>{ if(flee<4) dodge(e); },{passive:false});
 noBtn.addEventListener('click',e=>{ if(flee<4&&!reduce){ dodge(e); return; } declined(); });
 let loggedNo=null;
-function declined(){ if($('#verdict').classList.contains('show')) return; const nm=guest.value.trim()||'-'; if(loggedNo!==nm){ loggedNo=nm; record('no'); } store.set('rsvp',{name:guest.value.trim(),answer:'no'}); document.body.classList.add('quake'); setTimeout(()=>document.body.classList.remove('quake'),600);
+function declined(){ setTimeout(()=>{ showDeclined(); renderWB(); },50); if($('#verdict').classList.contains('show')) return; const nm=guest.value.trim()||'-'; if(loggedNo!==nm){ loggedNo=nm; record('no'); } store.set('rsvp',{name:guest.value.trim(),answer:'no'}); document.body.classList.add('quake'); setTimeout(()=>document.body.classList.remove('quake'),600);
   try{ac(); sfx('gavel');}catch(e){} $('#verdict').classList.add('show'); document.body.classList.add('lock'); setTimeout(()=>$('#appeal').focus(),400); }
-$('#appeal').addEventListener('click',()=>{ $('#verdict').classList.remove('show'); document.body.classList.remove('lock'); noBtn.classList.remove('fled'); noBtn.style.cssText=''; btns.style.minHeight=''; flee=0;
+$('#appeal').addEventListener('click',()=>{ box.classList.remove('no'); $('#verdict').classList.remove('show'); document.body.classList.remove('lock'); noBtn.classList.remove('fled'); noBtn.style.cssText=''; btns.style.minHeight=''; flee=0;
   statusEl.textContent='Wise choice. Now the green button, please.'; guest.focus(); });
 
 $('#rsvpForm').addEventListener('submit',async e=>{ e.preventDefault(); const name=guest.value.trim();
   if(!name){ statusEl.textContent='The judges insist on knowing your name.'; guest.classList.remove('err'); void guest.offsetWidth; guest.classList.add('err'); guest.focus(); return; }
   yesBtn.disabled=true; yesBtn.textContent='SEALING YOUR REPLY…'; const ok=await record('yes'); store.set('rsvp',{name,answer:'yes'});
   yesBtn.disabled=false; yesBtn.textContent='JOYFULLY ACCEPT'; statusEl.textContent=ok?'':'Your reply may not have reached us. Please text Earl too!';
-  showOnList(name); celebrate(name); });
+  box.classList.remove('no'); showOnList(name); celebrate(name); renderWB(); });
 
 /* ================= CELEBRATION ================= */
 const party=$('#party'),fx=$('#fx'),fc=fx.getContext('2d'); let fxOn=false,conf=[],rockets=[],sparks=[],FW=0,FH=0,rainT=0,rockT=0;
@@ -815,6 +848,25 @@ function celebrate(name){ sizeFx(); $('#huz').textContent='Huzzah, '+name.split(
 $('#okBtn').addEventListener('click',()=>{ party.classList.remove('show'); document.body.classList.remove('lock'); fxOn=false; conf=[];rockets=[];sparks=[]; setTune('carol'); $('#rsvp').scrollIntoView({block:'center'}); });
 addEventListener('resize',()=>{ if(fxOn) sizeFx(); });
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(party.classList.contains('show')) $('#okBtn').click(); else if($('#verdict').classList.contains('show')) $('#appeal').click(); } });
+
+/* ================= WELCOME BACK ================= */
+const returning=!!store.get('returning'); store.set('returning',true);
+function myRank(){ const me=(store.get('lbName')||'').toLowerCase(); if(!me) return null; const all=lbRows.concat(store.get('lbLocal')||[]),best={};
+  all.forEach(r=>{ const k=r.name.toLowerCase(); if(!best[k]||r.score>best[k].score) best[k]=r; }); const list=Object.values(best).sort((a,b)=>b.score-a.score); const i=list.findIndex(r=>r.name.toLowerCase()===me); return i<0?null:{rank:i+1,of:list.length}; }
+function renderWB(){ const r=store.get('rsvp'), b=store.get('best'), lbn=store.get('lbName'); if(!returning&&!r&&!b) return; const wb=$('#wb'); wb.hidden=false;
+  const name=((r&&r.name)||lbn||'').split(' ')[0]; $('#wbName').textContent=name||'friend';
+  const rv=$('#wbRsvp'); if(r&&r.answer==='yes'){ rv.textContent='On the list ✓'; rv.className='wb-v yes'; } else if(r&&r.answer==='no'){ rv.textContent='Declined (appeal?)'; rv.className='wb-v no'; } else { rv.textContent='Not yet'; rv.className='wb-v'; }
+  $('#wbBest').textContent=b?(b+' pts'):'Not played';
+  const mr=myRank(); $('#wbRank').textContent=mr?('#'+mr.rank+' of '+mr.of):(lbLoaded?'Not posted':'…');
+  const ms=EVENT-Date.now(), days=Math.floor(ms/864e5); $('#wbDays').textContent=ms<=0?'Happening now!':days>=2?(days+' days'):days===1?'1 day':'Today!';
+  $('#wbDir').href=DIR; }
+$('#wbEnv').addEventListener('click',()=>{ try{ localStorage.removeItem('fo_opened'); }catch(e){} location.reload(); });
+const _renderLB=renderLB; renderLB=function(){ _renderLB(); renderWB(); };
+renderWB();
+/* declined returning guests */
+function showDeclined(){ box.classList.remove('done'); box.classList.add('no'); }
+const pr=store.get('rsvp'); if(pr&&pr.answer==='no') showDeclined();
+$('#appeal2').addEventListener('click',()=>{ box.classList.remove('no'); guest.value=(store.get('rsvp')||{}).name||''; guest.focus(); statusEl.textContent='Appeal granted. The green button, please.'; });
 
 /* test hook for automated QA only */
 window.__fo={celebrate,declined,startGame,endGame:()=>{timeLeft=0;},score:()=>score,auto:()=>setInterval(()=>{ const c=items.filter(i=>i.t.pts>0).sort((a,b)=>b.y-a.y)[0]; if(c) targetX=c.x; },60)};
