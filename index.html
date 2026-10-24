@@ -195,7 +195,10 @@ a.wb-tile:hover{border-color:var(--gold);background:#fff}
 .live{display:inline-flex;align-items:center;gap:6px;font-family:var(--caps);font-size:9.5px;font-weight:700;letter-spacing:.2em;color:#c9e7d6}
 .live i{width:7px;height:7px;border-radius:50%;background:#4fd18b;box-shadow:0 0 0 0 rgba(79,209,139,.6);animation:ping 1.8s infinite}
 @keyframes ping{70%{box-shadow:0 0 0 7px rgba(79,209,139,0)}100%{box-shadow:0 0 0 0 rgba(79,209,139,0)}}
-.board ol{list-style:none;margin:0;padding:4px 0}
+.board ol{list-style:none;margin:0;padding:4px 0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#c9a24a transparent}
+.board ol::-webkit-scrollbar{width:6px}.board ol::-webkit-scrollbar-thumb{background:#c9a24a;border-radius:3px}
+.lbwrap{position:relative}.board .more{position:relative}.board .more::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(rgba(250,245,232,0),rgba(250,245,232,.95));pointer-events:none;transition:opacity .2s}
+.board .more.end::after{opacity:0}
 .board li{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 16px;border-top:1px solid rgba(217,198,144,.5)}
 .board li:first-child{border-top:0}
 .board li.me{background:rgba(201,162,74,.16)}
@@ -574,8 +577,8 @@ body.quake #stage{animation:shake .5s}
       <p class="best" id="gbest"></p>
       <div class="board" aria-label="Live leaderboard">
         <div class="board-h"><b>THE PODIUM</b><span class="live"><i></i>LIVE</span></div>
-        <ol id="lb"><li class="empty" style="display:block">Loading the standings…</li></ol>
-        <p class="board-f" id="lbf">Top 10 · best score per name</p>
+        <div class="lbwrap"><ol id="lb"><li class="empty" style="display:block">Loading the standings…</li></ol></div>
+        <p class="board-f" id="lbf">Best score per name</p>
       </div>
     </section>
 
@@ -899,16 +902,22 @@ function parseCSV(txt){ const rows=[]; let row=[],f='',q=false; for(let i=0;i<tx
 const clean=s=>String(s||'').replace(/\s+/g,' ').trim().slice(0,24);
 function renderLB(){ const local=store.get('lbLocal')||[]; const all=lbRows.concat(local); const best={};
   all.forEach(r=>{ const k=r.name.toLowerCase(); if(!best[k]||r.score>best[k].score) best[k]=r; });
-  const list=Object.values(best).sort((a,b)=>b.score-a.score).slice(0,10); const me=(store.get('lbName')||'').toLowerCase(); const ol=$('#lb'); ol.innerHTML='';
+  const list=Object.values(best).sort((a,b)=>b.score-a.score); const mine=myNames(); const ol=$('#lb'); const prevTop=ol.scrollTop, seen=!!ol._s; ol.innerHTML=''; ol.style.maxHeight=''; let meIdx=-1;
   if(!list.length){ const li=document.createElement('li'); li.className='empty'; li.style.display='block'; li.textContent=lbLoaded?'No scores yet. Be the first champion.':'Loading the standings…'; ol.appendChild(li); return; }
-  list.forEach((r,i)=>{ const li=document.createElement('li'); if(r.name.toLowerCase()===me) li.className='me';
+  list.forEach((r,i)=>{ const li=document.createElement('li'); const isMe=meIdx<0&&mine.includes(r.name.trim().toLowerCase()); if(isMe){ li.className='me'; meIdx=i; }
     const rk=document.createElement('span'); rk.className='rk'+(i===0?' g':i===1?' s':i===2?' b':''); rk.textContent=i+1;
-    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=r.name; if(r.name.toLowerCase()===me){ const s=document.createElement('small'); s.textContent='YOU'; nm.appendChild(s); }
-    const sc=document.createElement('span'); sc.className='sc'; sc.textContent=r.score; li.append(rk,nm,sc); ol.appendChild(li); }); }
+    const nm=document.createElement('span'); nm.className='nm'; nm.textContent=r.name; if(isMe){ const s=document.createElement('small'); s.textContent='YOU'; nm.appendChild(s); }
+    const sc=document.createElement('span'); sc.className='sc'; sc.textContent=r.score; li.append(rk,nm,sc); ol.appendChild(li); });
+  /* show the top 10, peek the 11th, scroll for the rest */
+  const wrap=ol.parentNode; wrap.classList.toggle('more',list.length>10); wrap.classList.remove('end');
+  if(list.length>10){ const li=ol.children[10]; ol.style.maxHeight=Math.round(li.offsetTop-ol.offsetTop+li.offsetHeight*.5)+'px';
+    if(seen) ol.scrollTop=prevTop; else if(meIdx>=10) ol.scrollTop=ol.children[meIdx].offsetTop-ol.offsetTop-ol.clientHeight/2;
+    if(!ol._s){ ol._s=1; ol.addEventListener('scroll',()=>wrap.classList.toggle('end',ol.scrollTop+ol.clientHeight>=ol.scrollHeight-4),{passive:true}); } }
+  $('#lbf').textContent=list.length>10?(list.length+' players · scroll for more · best score per name'):'Best score per name · updates every few minutes'; }
 async function loadLB(){ try{ const r=await fetch(LB_CSV+'&t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw 0; const rows=parseCSV(await r.text()).slice(1);
-    lbRows=rows.map(x=>({name:clean(x[1]),score:parseInt(x[2],10)})).filter(x=>x.name&&Number.isFinite(x.score)&&x.score>=0&&x.score<=400); lbLoaded=true;
+    lbRows=rows.map(x=>({name:clean(x[1]),score:parseInt(x[2],10)})).filter(x=>x.name&&Number.isFinite(x.score)&&x.score>=0&&x.score<=300); lbLoaded=true;
     const local=(store.get('lbLocal')||[]).filter(l=>!lbRows.some(r=>r.name.toLowerCase()===l.name.toLowerCase()&&r.score>=l.score)); store.set('lbLocal',local);
-    $('#lbf').textContent='Top 10 · best score per name · updates every few minutes'; }
+    }
   catch(e){ lbLoaded=true; $('#lbf').textContent='Standings will appear shortly.'; } renderLB(); }
 loadLB(); setInterval(()=>{ if(!document.hidden) loadLB(); },60000);
 $('#lbpost').addEventListener('click',async()=>{ const name=clean($('#lbname').value); if(!name){ $('#lbok').textContent='Kylo needs a name for the podium.'; $('#lbname').focus(); return; }
