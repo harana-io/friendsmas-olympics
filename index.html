@@ -55,6 +55,9 @@ button,input{font:inherit;color:inherit}
 /* ---------- envelope ---------- */
 #envelope{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:transparent;transition:opacity .9s ease,visibility .9s}
 #envelope.gone{opacity:0;visibility:hidden}
+#envelope[hidden]{display:none}
+.foot button{display:inline-block;margin-top:12px;font:inherit;letter-spacing:.24em;color:var(--gold-dark);background:none;border:0;border-bottom:1px solid currentColor;padding:6px 2px;cursor:pointer;min-height:36px}
+.foot button:hover{color:var(--crimson)}
 .env-wrap{display:grid;justify-items:center;gap:22px}
 .env{position:relative;width:min(86vw,520px);aspect-ratio:1.5;cursor:pointer;perspective:1400px;filter:drop-shadow(0 28px 40px rgba(0,0,0,.55));border:0;padding:0;background:none}
 .env .back{position:absolute;inset:0;border-radius:10px;background:linear-gradient(180deg,#e9dcbb,#d9c79d)}
@@ -546,7 +549,7 @@ body.quake #stage{animation:shake .5s}
       </div>
     </section>
 
-    <p class="foot">BY ROYAL DECREE · MMXXVI</p>
+    <p class="foot">BY ROYAL DECREE · MMXXVI<br><button type="button" id="footEnv">✉ REOPEN THE ENVELOPE</button></p>
   </article>
 </main>
 
@@ -652,9 +655,13 @@ let resumeMusic=false;
 const env=$('#env'),envWrap=$('#envelope'),stage=$('#stage'); let opened=false;
 function openEnv(){ if(opened) return; opened=true; env.classList.add('open'); env.parentNode.classList.add('opening'); if(!reduce) setMusic(true);
   setTimeout(()=>{ envWrap.classList.add('gone'); stage.classList.remove('pre'); document.body.classList.remove('lock'); scrollTo(0,0); }, reduce?0:1500);
-  setTimeout(()=>{ envWrap.remove(); }, 2600); }
+  setTimeout(()=>{ if(opened) envWrap.hidden=true; }, 2600); }
+function reopenEnv(){ if(!opened) return; opened=false; document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+  env.classList.remove('open'); env.parentNode.classList.remove('opening'); envWrap.classList.add('gone'); envWrap.hidden=false;
+  stage.classList.add('pre'); document.body.classList.add('lock'); scrollTo(0,0);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ envWrap.classList.remove('gone'); env.focus({preventScroll:true}); })); try{ac(); sfx('big');}catch(e){} }
 env.addEventListener('click',openEnv);
-if(store.get('opened')||reduce){ /* returning guests skip straight in */ opened=true; envWrap.remove(); stage.classList.remove('pre'); document.body.classList.remove('lock'); }
+if(store.get('opened')||reduce){ /* returning guests skip straight in */ opened=true; envWrap.classList.add('gone'); envWrap.hidden=true; stage.classList.remove('pre'); document.body.classList.remove('lock'); }
 store.set('opened',true);
 
 /* ================= COUNTDOWN ================= */
@@ -882,7 +889,7 @@ function renderWB(){ const r=store.get('rsvp'), b=store.get('best'), lbn=store.g
   const ms=EVENT-Date.now(); let days; try{ const [y,mo,d]=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).split('-').map(Number); days=Math.round((Date.UTC(2026,11,19)-Date.UTC(y,mo-1,d))/864e5); }catch(e){ days=Math.ceil(ms/864e5); }
   $('#wbDays').textContent=ms<=0?'Happening now!':days>=2?(days+' days'):days===1?'Tomorrow!':'Tonight!';
   $('#wbDir').href=DIR; }
-$('#wbEnv').addEventListener('click',()=>{ try{ localStorage.removeItem('fo_opened'); }catch(e){} location.reload(); });
+$('#wbEnv').addEventListener('click',reopenEnv); $('#footEnv').addEventListener('click',reopenEnv);
 const _renderLB=renderLB; renderLB=function(){ _renderLB(); renderWB(); };
 renderWB();
 /* declined returning guests */
