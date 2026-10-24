@@ -982,13 +982,16 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(party.classList.contain
 
 /* ================= WELCOME BACK ================= */
 const returning=!!store.get('returning'); store.set('returning',true);
-function myRank(){ const me=(store.get('lbName')||'').toLowerCase(); if(!me) return null; const all=lbRows.concat(store.get('lbLocal')||[]),best={};
-  all.forEach(r=>{ const k=r.name.toLowerCase(); if(!best[k]||r.score>best[k].score) best[k]=r; }); const list=Object.values(best).sort((a,b)=>b.score-a.score); const i=list.findIndex(r=>r.name.toLowerCase()===me); return i<0?null:{rank:i+1,of:list.length}; }
+function myRank(){ const r=store.get('rsvp')||{}, full=(r.name||'').trim().toLowerCase();
+  const cands=[(store.get('lbName')||'').trim().toLowerCase(), full, full.split(/\s+/)[0]].filter(Boolean); if(!cands.length) return null;
+  const all=lbRows.concat(store.get('lbLocal')||[]),best={};
+  all.forEach(x=>{ const k=x.name.trim().toLowerCase(); if(!best[k]||x.score>best[k].score) best[k]=x; }); const list=Object.values(best).sort((p,q)=>q.score-p.score);
+  for(const c of cands){ const i=list.findIndex(x=>x.name.trim().toLowerCase()===c); if(i>=0) return {rank:i+1,of:list.length,score:list[i].score}; } return null; }
 function renderWB(){ const r=store.get('rsvp'), b=store.get('best'), lbn=store.get('lbName'); if(!returning) return; const wb=$('#wb'); wb.hidden=false;
   const name=((r&&r.name)||lbn||'').split(' ')[0]; $('#wbName').textContent=name||'friend';
   const rv=$('#wbRsvp'); if(r&&r.answer==='yes'){ rv.textContent='On the list ✓'; rv.className='wb-v yes'; } else if(r&&r.answer==='no'){ rv.textContent='Declined (appeal?)'; rv.className='wb-v no'; } else { rv.textContent='Not yet'; rv.className='wb-v'; }
-  $('#wbBest').textContent=b?(b+' pts'):'Not played';
-  const mr=myRank(); $('#wbRank').textContent=mr?('#'+mr.rank+' of '+mr.of):(lbLoaded?'Not posted':'…');
+  const mr=myRank(); const bb=Math.max(b||0,mr?mr.score:0); $('#wbBest').textContent=bb?(bb+' pts'):'Not played';
+  $('#wbRank').textContent=mr?('#'+mr.rank+' of '+mr.of):(lbLoaded?'Not posted':'…');
   const ms=EVENT-Date.now(); let days; try{ const [y,mo,d]=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()).split('-').map(Number); days=Math.round((Date.UTC(2026,11,19)-Date.UTC(y,mo-1,d))/864e5); }catch(e){ days=Math.ceil(ms/864e5); }
   $('#wbDays').textContent=ms<=0?'Happening now!':days>=2?(days+' days'):days===1?'Tomorrow!':'Tonight!';
   $('#wbDir').href=DIR; }
