@@ -132,6 +132,7 @@ h2{margin:0;text-align:center;font-family:var(--body);font-weight:600;font-size:
 .bubble.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 .judge.l .bubble{left:20%}.judge.r .bubble{left:80%}
 .cap{margin:0;font-family:var(--caps);font-weight:700;font-size:clamp(9px,1.5vw,11.5px);letter-spacing:.24em;color:var(--crimson)}
+@media (max-width:340px){.cap{letter-spacing:.12em}}
 .cap i{display:block;font-family:var(--body);font-style:italic;font-weight:600;letter-spacing:0;font-size:clamp(14px,2.2vw,17px);color:var(--ink);margin-top:3px}
 .hint{margin:16px 0 0;text-align:center;font-style:italic;font-size:15px;color:var(--ink-soft)}
 
@@ -455,7 +456,7 @@ body.quake #stage{animation:shake .5s}
 <rect x="-5" y="-6" width="4" height="10" rx="2" fill="#55555c" opacity=".7"/></g></svg>
           <span class="tap" aria-hidden="true">♪</span>
         </button>
-        <p class="cap">Chief Justice Nobi<i>Presiding over the Games</i></p>
+        <p class="cap">Justice Nobi<i>Chief of the Games</i></p>
       </div>
       <div class="judge r" data-pet="black">
         <button class="jbtn" type="button" aria-label="Hear from Judge Kylo, Keeper of the Score">
