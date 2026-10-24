@@ -688,7 +688,8 @@ function dodge(e){ if(flee>=4||reduce) return; if(e) e.preventDefault(); flee++;
 noBtn.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') dodge(); });
 noBtn.addEventListener('touchstart',e=>{ if(flee<4) dodge(e); },{passive:false});
 noBtn.addEventListener('click',e=>{ if(flee<4&&!reduce){ dodge(e); return; } declined(); });
-function declined(){ record('no'); store.set('rsvp',{name:guest.value.trim(),answer:'no'}); document.body.classList.add('quake'); setTimeout(()=>document.body.classList.remove('quake'),600);
+let loggedNo=null;
+function declined(){ if($('#verdict').classList.contains('show')) return; const nm=guest.value.trim()||'-'; if(loggedNo!==nm){ loggedNo=nm; record('no'); } store.set('rsvp',{name:guest.value.trim(),answer:'no'}); document.body.classList.add('quake'); setTimeout(()=>document.body.classList.remove('quake'),600);
   try{ac(); sfx('gavel');}catch(e){} $('#verdict').classList.add('show'); document.body.classList.add('lock'); setTimeout(()=>$('#appeal').focus(),400); }
 $('#appeal').addEventListener('click',()=>{ $('#verdict').classList.remove('show'); document.body.classList.remove('lock'); noBtn.classList.remove('fled'); noBtn.style.cssText=''; btns.style.minHeight=''; flee=0;
   statusEl.textContent='Wise choice. Now the green button, please.'; guest.focus(); });
