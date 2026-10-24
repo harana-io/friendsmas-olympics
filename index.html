@@ -863,21 +863,35 @@ $$('.champ').forEach(b=>b.addEventListener('click',()=>{ champ=b.dataset.pet; $$
 function startGame(){ try{ac();}catch(e){} items=[];parts=[];floats=[];score=0;combo=0;timeLeft=30;spawnT=.3;px=targetX=GW/2; state='play'; $('#gscreen').classList.add('playing'); $('#gmenu').hidden=true; $('#gend').hidden=true; setTune('deck'); }
 $('#gstart').addEventListener('click',startGame); $('#gagain').addEventListener('click',startGame);
 $('#gswap').addEventListener('click',()=>{ state='menu'; $('#gscreen').classList.remove('playing'); items=[]; $('#gend').hidden=true; $('#gmenu').hidden=false; });
-function medalSVG(c1,c2,lab){ return `<path d="M30 0h14l12 34H42zM70 0H56L44 34h14z" fill="#b3263a"/><path d="M36 0h4l12 34h-4zM60 0h4L52 34h-4z" fill="#fff" opacity=".7"/><circle cx="50" cy="62" r="30" fill="${c1}" stroke="${c2}" stroke-width="4"/><circle cx="50" cy="62" r="22" fill="none" stroke="${c2}" stroke-opacity=".5" stroke-width="2"/><text x="50" y="70" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="20" fill="${c2}">${lab}</text>`; }
+function medalSVG(c1,c2,lab){ return `<path d="M30 0h14l12 34H42zM70 0H56L44 34h14z" fill="#b3263a"/><path d="M36 0h4l12 34h-4zM60 0h4L52 34h-4z" fill="#fff" opacity=".7"/><circle cx="50" cy="62" r="30" fill="${c1}" stroke="${c2}" stroke-width="4"/><circle cx="50" cy="62" r="22" fill="none" stroke="${c2}" stroke-opacity=".5" stroke-width="2"/><text x="50" y="70" text-anchor="middle" font-family="Cinzel, serif" font-weight="700" font-size="${lab.length>4?11:13}" letter-spacing=".5" fill="${c2}">${lab}</text>`; }
 function endGame(){ state='over'; $('#gscreen').classList.remove('playing'); setTune('carol'); sfx('end'); const best=Math.max(score,store.get('best')||0); store.set('best',best);
-  let m,v; if(score>=40){ m=medalSVG('#f2d27a','#8a6420','1st'); v='Champion! Chief Justice Nobi has awakened to applaud.'; }
-  else if(score>=20){ m=medalSVG('#dfe5ea','#6b7781','2nd'); v='Respectable. Judge Kylo nods, slightly.'; }
-  else { m=medalSVG('#d99a5b','#7a4a1e','3rd'); v='Lily is… concerned. Training camp starts now.'; }
+  let m; if(score>=GOLD_AT){ m=medalSVG('#f2d27a','#8a6420','GOLD'); } else if(score>=SILVER_AT){ m=medalSVG('#dfe5ea','#6b7781','SILVER'); } else { m=medalSVG('#d99a5b','#7a4a1e','BRONZE'); }
+  const v=podiumVerdict(score);
   lastScore=score; postedThisRound=false; $('#lbpost').disabled=false; $('#lbpost').textContent='POST MY SCORE'; $('#lbok').textContent=''; $('#lbname').value=store.get('lbName')||((store.get('rsvp')||{}).name||'').split(' ')[0]||'';
   setTimeout(renderWB,0);
   $('#gmedal').innerHTML=m; $('#gscore').textContent=score; $('#gverdict').textContent=v; $('#gend').hidden=false; showBest(); }
-function showBest(){ const b=store.get('best'); $('#gbest').textContent=b?('YOUR BEST: '+b+' · GOLD AT 40'):'GOLD MEDAL AT 40 POINTS'; }
-showBest();
+const GOLD_AT=150, SILVER_AT=100;
+/* where a score would land on the live Podium (best score per name), using this guest's own names */
+function myNames(){ const r=store.get('rsvp')||{}, full=(r.name||'').trim().toLowerCase(), typed=(($('#lbname')||{}).value||'').trim().toLowerCase();
+  return [typed,(store.get('lbName')||'').trim().toLowerCase(),full,full.split(/\s+/)[0]].filter(Boolean); }
+function podiumBoard(){ const best={}; lbRows.concat(store.get('lbLocal')||[]).forEach(x=>{ const k=x.name.trim().toLowerCase(); if(!best[k]||x.score>best[k].score) best[k]={name:k,score:x.score}; }); return Object.values(best); }
+function podiumVerdict(s){
+  if(!lbLoaded) return s>=GOLD_AT?'Gold! Chief Justice Nobi has awakened to applaud.':s>=SILVER_AT?'Silver. Judge Kylo nods, slightly.':'Bronze. Lily is… concerned. Training camp starts now.';
+  const me=myNames(), board=podiumBoard(), mine=board.filter(x=>me.includes(x.name)), others=board.filter(x=>!me.includes(x.name));
+  const P=mine.length?Math.max(...mine.map(x=>x.score)):0, rankOf=v=>1+others.filter(x=>x.score>v).length;
+  if(P&&s<=P){ const r=rankOf(P); return `Your posted ${P} still holds #${r} on the Podium. `+(s>=P-15?'So close. Judge Kylo is watching.':'Lily has seen better from you.'); }
+  const r=rankOf(s);
+  if(r===1&&P&&rankOf(P)===1) return 'New personal best, and the #1 spot is still yours! Post it!';
+  if(r===1) return others.length?'A new #1 on the Podium! Chief Justice Nobi has awakened to applaud. Post it!':'First on the Podium! Post it before anyone else does.';
+  if(r<=3) return `That’s #${r} on the Podium. Judge Kylo nods, slightly. Post it!`;
+  return `That would place #${r} on the Podium. Lily believes in you. Mostly.`; }
+function showBest(){ const pod=Math.max(0,...podiumBoard().filter(x=>myNames().includes(x.name)).map(x=>x.score)); const b=Math.max(store.get('best')||0,pod);
+  $('#gbest').textContent=b?('YOUR BEST: '+b+' · GOLD AT '+GOLD_AT):'GOLD MEDAL AT '+GOLD_AT+' POINTS'; }
 
 /* ================= LEADERBOARD ================= */
 const LB_POST='https://docs.google.com/forms/u/0/d/e/1FAIpQLScC5-b0dZ_09ejS6yiDqCvPG2mKugSQc1wphPTO7BDf_be84w/formResponse', LB_NAME='entry.396736914', LB_SCORE='entry.1926955772';
 const LB_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTFl72K1bxGWheLRkdXOHD0SKvQHxNu_JkoqU4zKJO8wVlqcCOfRaHFUqxO0yiwTNb4PzcsKHc8mgPA/pub?gid=24836778&single=true&output=csv';
-let lbRows=[], lbLoaded=false, lastScore=0, postedThisRound=false;
+let lbRows=[], lbLoaded=false, lastScore=0, postedThisRound=false; showBest();
 function parseCSV(txt){ const rows=[]; let row=[],f='',q=false; for(let i=0;i<txt.length;i++){ const c=txt[i];
   if(q){ if(c=='"'){ if(txt[i+1]=='"'){ f+='"'; i++; } else q=false; } else f+=c; }
   else if(c=='"') q=true; else if(c==','){ row.push(f); f=''; } else if(c=='\n'||c=='\r'){ if(c=='\r'&&txt[i+1]=='\n') i++; row.push(f); rows.push(row); row=[]; f=''; } else f+=c; }
@@ -996,7 +1010,7 @@ function renderWB(){ const r=store.get('rsvp'), b=store.get('best'), lbn=store.g
   $('#wbDays').textContent=ms<=0?'Happening now!':days>=2?(days+' days'):days===1?'Tomorrow!':'Tonight!';
   $('#wbDir').href=DIR; }
 $('#wbEnv').addEventListener('click',reopenEnv); $('#footEnv').addEventListener('click',reopenEnv);
-const _renderLB=renderLB; renderLB=function(){ _renderLB(); renderWB(); };
+const _renderLB=renderLB; renderLB=function(){ _renderLB(); renderWB(); showBest(); };
 renderWB();
 /* declined returning guests */
 function showDeclined(){ box.classList.remove('done'); box.classList.add('no'); }
@@ -1004,7 +1018,7 @@ const pr=store.get('rsvp'); if(pr&&pr.answer==='no') showDeclined();
 $('#appeal2').addEventListener('click',()=>{ box.classList.remove('no'); resetDecline(); guest.value=(store.get('rsvp')||{}).name||''; guest.focus(); statusEl.textContent='Appeal granted. The green button, please.'; });
 
 /* test hook for automated QA only */
-if(location.protocol==='file:') window.__fo={celebrate,declined,startGame,endGame:()=>{timeLeft=0;},score:()=>score,auto:()=>setInterval(()=>{ const c=items.filter(i=>i.t.pts>0).sort((a,b)=>b.y-a.y)[0]; if(c) targetX=c.x; },60)};
+if(location.protocol==='file:') window.__fo={verdict:podiumVerdict,celebrate,declined,startGame,endGame:()=>{timeLeft=0;},score:()=>score,auto:()=>setInterval(()=>{ const c=items.filter(i=>i.t.pts>0).sort((a,b)=>b.y-a.y)[0]; if(c) targetX=c.x; },60)};
 })();
 </script>
 </body>
