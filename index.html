@@ -729,7 +729,7 @@ showBest();
 
 /* ================= LEADERBOARD ================= */
 const LB_POST='https://docs.google.com/forms/u/0/d/e/1FAIpQLScC5-b0dZ_09ejS6yiDqCvPG2mKugSQc1wphPTO7BDf_be84w/formResponse', LB_NAME='entry.396736914', LB_SCORE='entry.1926955772';
-const LB_CSV='https://docs.google.com/spreadsheets/d/1w-814HvrY9OIsrgIUFwRYChfOT6fJdsslksmMT8wFE4/pub?gid=24836778&single=true&output=csv';
+const LB_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTFl72K1bxGWheLRkdXOHD0SKvQHxNu_JkoqU4zKJO8wVlqcCOfRaHFUqxO0yiwTNb4PzcsKHc8mgPA/pub?gid=24836778&single=true&output=csv';
 let lbRows=[], lbLoaded=false, lastScore=0, postedThisRound=false;
 function parseCSV(txt){ const rows=[]; let row=[],f='',q=false; for(let i=0;i<txt.length;i++){ const c=txt[i];
   if(q){ if(c=='"'){ if(txt[i+1]=='"'){ f+='"'; i++; } else q=false; } else f+=c; }
