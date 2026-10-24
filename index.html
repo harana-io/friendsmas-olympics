@@ -486,7 +486,7 @@ body.quake #stage{animation:shake .5s}
     <section class="when" aria-label="Date and time">
       <div class="d">SATURDAY</div>
       <div class="big">the Nineteenth of December</div>
-      <div class="t">from five o’clock in the evening<br>until <em class="forever">forever</em></div>
+      <div class="t">from five o’clock in the evening<br>until the judges require a <em class="forever">nap</em></div>
       <div class="count" id="count" role="timer" aria-label="Countdown to the games">
         <div><b id="cd">00</b><span>DAYS</span></div><div><b id="ch">00</b><span>HOURS</span></div><div><b id="cm">00</b><span>MIN</span></div><div><b id="cs">00</b><span>SEC</span></div>
       </div>
@@ -722,7 +722,7 @@ function tick(){ let ms=EVENT-Date.now(); if(ms<=0){ $('#count').innerHTML='<div
 tick();
 
 /* ================= CALENDAR + DIRECTIONS ================= */
-const ADDR='206 Sleepy Hollow Ct, Taylor Lake Village, TX 77586', EV_TITLE='Friendsmas Olympics', EV_DESC='Ugly Christmas sweaters or Christmas pajamas. BYOB. The victor shall receive a prize. Ends: never. The party is forever.';
+const ADDR='206 Sleepy Hollow Ct, Taylor Lake Village, TX 77586', EV_TITLE='Friendsmas Olympics', EV_DESC='Ugly Christmas sweaters or Christmas pajamas. BYOB. The victor shall receive a prize. Ends: whenever the judges require a nap.';
 const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Friendsmas Olympics//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:friendsmas-olympics-2026@harana-io.github.io','DTSTAMP:20261024T000000Z','DTSTART:20261219T230000Z','SUMMARY:'+EV_TITLE,'LOCATION:'+ADDR.replace(/,/g,'\\,'),'DESCRIPTION:'+EV_DESC.replace(/,/g,'\\,'),'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Friendsmas Olympics tomorrow! Sweater check.','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
 const enc=encodeURIComponent;
 const GCAL='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+enc(EV_TITLE)+'&dates=20261219T230000Z/20261219T230000Z&details='+enc(EV_DESC)+'&location='+enc(ADDR);
